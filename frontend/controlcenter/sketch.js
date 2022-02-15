@@ -254,6 +254,7 @@ function gotMessage(msg) {
 	if (command === "R") {
 		let [x, y, a] = data;
 		robot = {x, y, a, time: Date.now()};
+		outputConsole(`RobotPos: (${x},${y}, ${a})`)
 	} else if (command === "O") {
 		// outputConsole(`Obstacles: ${data}`);
 		obstacles = [];

@@ -1,4 +1,6 @@
 # import motors
+import math
+
 from tether import Tether
 from time import sleep
 import asyncio
@@ -9,19 +11,42 @@ from vision import Detector, Locator
 from xbox_drive import XboxController
 from termcolor import colored, cprint
 
+
+x = 0
+y = 0
+angle = 0
 def receive_msg(msg, conn):
     # format is operator:arguments
     cmd, *args = msg.split(':')
 
     print(f"cmd: {cmd}, args: {args}")
+    if cmd == 'M':
+        global x
+        x = input("Enter X")
+        global y
+        y = input("Enter Y")
+        global angle
+        angle = math.radians(int(input("Enter Angle (Degrees)")))
+    if cmd == 'STOP':
+        print('STOPING')
+        quit()
+        #t.send(f'R:{input("Enter X")}, {input("Enter Y")}, {input("Enter Angle (Degrees)")}')
+
 
 # begin accepting connections
 loop = asyncio.get_event_loop()
 t = Tether(handler=receive_msg, loop=loop)
 
-detector = Detector()
-locator = Locator()
-xbox = XboxController()
+# detector = Detector()
+# locator = Locator()
+#xbox = XboxController()
+
+
+async def sendCords():
+    while True:
+        #print('pp')
+        await t.send(f'R:{x},{y},{angle}')
+        await asyncio.sleep(1.0)
 
 async def lidar_test():
     i = 0
@@ -40,12 +65,15 @@ async def lidar_test():
         await asyncio.sleep(0.25)
         i += 1
 
+
 async def manual_control():
     i = 0
     while True:
         xbox.read_controller()
         if i % 10 == 0:
             print("\n--- READ XBOX VALUES ---")
+            pos_cmd = f'R:{xbox.motor_xy.x},{xbox.motor_xy.y},{math.degrees(math.atan2(xbox.td_xy.y,xbox.td_xy.x))}'
+            await t.send(pos_cmd)
             print(xbox.motor_xy)
             print(xbox.td_xy)
             print("------------------------\n")
@@ -53,8 +81,10 @@ async def manual_control():
         await asyncio.sleep(0.5)
         i += 1
 
-loop.create_task(lidar_test())
-loop.create_task(manual_control())
+
+loop.create_task(sendCords())
+#loop.create_task(lidar_test())
+#loop.create_task(manual_control())
 
 # Start the event loop
 cprint(f"IP Address: {t.get_ip_address()}", "cyan")
