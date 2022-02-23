@@ -10,11 +10,15 @@ import sys
 from vision import Detector, Locator
 from xbox_drive import XboxController
 from termcolor import colored, cprint
+from ControllerReceiver import ControllerReceiver
 
 
 x = 0
 y = 0
 angle = 0
+
+controllerReceiver = ControllerReceiver()
+
 def receive_msg(msg, conn):
     # format is operator:arguments
     cmd, *args = msg.split(':')
@@ -30,7 +34,11 @@ def receive_msg(msg, conn):
     if cmd == 'STOP':
         print('STOPING')
         quit()
-        #t.send(f'R:{input("Enter X")}, {input("Enter Y")}, {input("Enter Angle (Degrees)")}')
+        #t.send(f'R:{input("Enter X")}, {input("Enter Y")}, {input("Enter Angle (Degrees)")}
+    if cmd[0] == 'G':
+        controllerReceiver.update(cmd[1])
+
+
 
 
 # begin accepting connections

@@ -22,6 +22,38 @@ let robot = {x: arenaWidth / 2, y: 1.5 * robotHeight, a: 0}; // a is angle
 // UI components
 let panels = [];
 
+let gamepadRefreshrate;
+
+document.addEventListener('keydown', function(event) {
+    if(event.code === 87) {
+        send('W')
+    }
+    else if(event.code === 65) {
+        send('A')
+    }
+	else if (event.code === 83) {
+		send('S')
+	}
+	else if (event.code === 68) {
+		send('D')
+	}
+});
+
+document.addEventListener('keyup', function(event) {
+    if(event.code === 87) {
+        send('w')
+    }
+    else if(event.code === 65) {
+        send('a')
+    }
+	else if (event.code === 83) {
+		send('s')
+	}
+	else if (event.code === 68) {
+		send('d')
+	}
+});
+
 function setup() {
 	// ws = {send: console.log};
 
@@ -67,7 +99,9 @@ function setup() {
 	//
 	generalSettings = QuickSettings.create(document.body.clientWidth - 300, 0.4 * document.body.clientHeight + 250, "General settings")
 		.addBoolean("Snap panels right", true, window.onresize)
-		.addRange("Controller refresh (ms)", 100, 5000, 1500, 100)
+		.addRange("Controller refresh (ms)", 100, 5000, 1500, 100, function (value) {
+			gamepadRefreshrate = value;
+		})
 		.setWidth(200)
 		.setHeight(150)
 
@@ -282,3 +316,80 @@ window.onresize = function (event) {
 		panel.setPosition(document.body.clientWidth - curWidth - 50, curY);
 	}
 };
+
+window.onkeydown = function (gfg) {
+	if (gfg.key.length === 1) {
+		send(gfg.key.toUpperCase());
+	}
+};
+window.onkeyup = function (gfg) {
+	if (gfg.key.length === 1) {
+		send(gfg.key.toLowerCase());
+	}
+}
+
+var gamepad;
+
+// function to be called when a gamepad is connected
+window.addEventListener("gamepadconnected", function(e) {
+  console.info("Gamepad connected!");
+  gamepads[e.gamepad.index] = true;
+  const indexes = Object.keys(gamepads);
+});
+
+//Everything below handles the gamepad
+let gamepadStates = []
+let prevGamepadStates = []
+let startTime = 0
+let statesThing = [['A','a'],['B','b'],['X','x'],['Y','y']];
+let axesThing = ['L','l','R','r']
+
+//runs constantly
+let gamepadEvents = setInterval(function ()
+{
+	const connectedGamepads = navigator.getGamepads(); //get gamepads
+//only one gamepad should be connected at all times, so connectedGamepads[0] will always get the gamepad
+	//add the state of all the buttons of gamepadStates.  1 means pressed, 0 means released
+	for (let i = 0; i < connectedGamepads[0].buttons.length; i++) {
+		gamepadStates[i] = connectedGamepads[0].buttons[i].value //
+	}
+	//add the axes values of all 4 sticks to GamepadStates and make sure the value convert the decimal value from 0-1 to 0-99
+	for (let i = 0; i < connectedGamepads[0].axes.length; i++) {
+		gamepadStates[i+connectedGamepads[0].buttons.length] = Math.min(Math.trunc(connectedGamepads[0].axes[i]*100),99);
+	}
+
+	//get the time
+	const time = new Date().getTime() - startTime;
+	//if time is greater than the gamepadRefreshrate setting (set in webserver)
+	if (time > gamepadRefreshrate) {
+		let stateChanges = '';
+		//convert gamepadStates into string
+		for (let i = 0; i < statesThing[0].length; i++) {
+			stateChanges += addToStateChanges(i,stateChanges[i][0],stateChanges[i][1])
+		}
+		for (let i = connectedGamepads[0].buttons.length; i < gamepadStates.length; i++) {
+			stateChanges += addAxestoStateChange(i, axesThing[i], gamepadStates[i])
+		}
+		send('G:' + stateChanges)
+		prevGamepadStates = gamepadStates
+		//reset timer
+		startTime = new Date().getTime();
+	}
+
+	console.log(gamepadStates)
+
+	//console.log(gamepadRefreshrate)
+});
+
+function addToStateChanges(i, charIf1, charIf0) {
+	if (gamepadStates[i] !== prevGamepadStates[i]) return (gamepadStates[0] === 1) ? charIf1 : charIf0;
+}
+function addAxestoStateChange(i, stickChar, number) {
+	if (gamepadStates[i] !== prevGamepadStates[i]) return stickChar + number.toString();
+}
+
+// listener to be called when a gamepad is disconnected
+window.addEventListener("gamepaddisconnected", function(e) {
+  console.info("Gamepad disconnected");
+  delete gamepads[e.gamepad.index];
+});
