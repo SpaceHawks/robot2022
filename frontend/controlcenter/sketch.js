@@ -2,12 +2,12 @@
 const gridSize = 5; // How much numbers are rounded by
 const gridCellResolution = 4; // How many px to draw a cell as
 const arenaWidth = 500;
-const arenaHeight = 1500;
+const arenaHeight = 720;
 const robotWidth = 10;
 const robotHeight = 39;
 
 let ws, xws;
-let driveSettings, generalSettings, consoleSettings;
+let driveSettings, generalSettings, consoleSettings, imageSettings;
 let state = 2; // 0 = TD, 1 = AD, 2 = AI
 const states = ["Tank Drive", "Arcade Drive", "Autonomous"];
 const shortStates = ["TD", "AD", "AI"];
@@ -24,35 +24,35 @@ let panels = [];
 
 let gamepadRefreshrate;
 
-document.addEventListener('keydown', function(event) {
-    if(event.code === 87) {
-        send('W')
-    }
-    else if(event.code === 65) {
-        send('A')
-    }
-	else if (event.code === 83) {
-		send('S')
-	}
-	else if (event.code === 68) {
-		send('D')
-	}
-});
-
-document.addEventListener('keyup', function(event) {
-    if(event.code === 87) {
-        send('w')
-    }
-    else if(event.code === 65) {
-        send('a')
-    }
-	else if (event.code === 83) {
-		send('s')
-	}
-	else if (event.code === 68) {
-		send('d')
-	}
-});
+// document.addEventListener('keydown', function(event) {
+//     if(event.code === 87) {
+//         send('W')
+//     }
+//     else if(event.code === 65) {
+//         send('A')
+//     }
+// 	else if (event.code === 83) {
+// 		send('S')
+// 	}
+// 	else if (event.code === 68) {
+// 		send('D')
+// 	}
+// });
+//
+// document.addEventListener('keyup', function(event) {
+//     if(event.code === 87) {
+//         send('w')
+//     }
+//     else if(event.code === 65) {
+//         send('a')
+//     }
+// 	else if (event.code === 83) {
+// 		send('s')
+// 	}
+// 	else if (event.code === 68) {
+// 		send('d')
+// 	}
+// });
 
 function setup() {
 	// ws = {send: console.log};
@@ -78,6 +78,11 @@ function setup() {
 	// xws.onclose = msg => {
 	// 	alert("lost connection with the xbox sever... referesh to reconnect");
 	// };
+
+	imageSettings = QuickSettings.create(100 , 0, "")
+		.addImage("Robot Image", "")
+		.setWidth(720)
+		.setHeight(480)
 
 	driveSettings = QuickSettings.create(document.body.clientWidth - 300, 0.4 * document.body.clientHeight, "Drive settings")
 		.addButton("Tank Drive", () => handlePress("TD"))
@@ -114,12 +119,11 @@ function setup() {
 		.setHeight(150)
 		.disableControl("Output");
 
-	panels = [ generalSettings, driveSettings, consoleSettings ];
+	panels = [ generalSettings, driveSettings, consoleSettings, imageSettings];
 	createCanvas(arenaWidth * gridCellResolution / gridSize, arenaHeight * gridCellResolution / gridSize);
 	frameRate(10);
 	angleMode(DEGREES);
 	rectMode(CENTER);
-	console.log(CENTER, "CENTER");
 	window.onresize();
 	sendState();
 }
@@ -277,6 +281,25 @@ function draw() {
 
 // WebSocket received message
 function gotMessage(msg) {
+	// console.log(msg.data)
+	if (msg.data instanceof Blob) {
+
+		//display blob image.  IDK why it's a promise but it works like this soooooooooo.
+		msg.data.text().then((result) => {
+			// let image = document.getElementById('robotImage')
+			// image.src = "data:image/png;base64," + result;
+			// image.style.width = '480px';
+			// image.style.height = '480px';
+			// image.style.left = '300px'
+			// image.style.top = '0px'
+
+			imageSettings.setValue("Robot Image", "data:image/png;base64," + result);
+			console.log(image)
+		}).catch(err=>console.log(err))
+
+		return;
+	}
+
 	if (msg.data.indexOf(":") === -1) {
 		msgs.push(msg.data);
 		return console.log(`Unknown message format: ${msg.data}`);
@@ -301,7 +324,16 @@ function gotMessage(msg) {
 	} else if (command === "M") {
 		let msg = args[1];
 		outputConsole(`Message: ${msg}`)
-	} else console.log(`Unknown command: ${msg.data}`);
+	} else if (command === "I") {
+		let image = document.getElementById('robotImage')
+		image.src = "data:image/png;base64," + data;
+		image.style.width = '480px';
+		image.style.height = '480px';
+		image.style.left = '300px'
+		image.style.top = '0px'
+		console.log(image)
+	}
+	else console.log(`Unknown command: ${msg.data}`);
 	msgs.push(msg.data);
 }
 
@@ -316,7 +348,7 @@ window.onresize = function (event) {
 		panel.setPosition(document.body.clientWidth - curWidth - 50, curY);
 	}
 };
-
+/*
 window.onkeydown = function (gfg) {
 	if (gfg.key.length === 1) {
 		send(gfg.key.toUpperCase());
@@ -385,7 +417,14 @@ function addToStateChanges(i, charIf1, charIf0) {
 	if (gamepadStates[i] !== prevGamepadStates[i]) return (gamepadStates[0] === 1) ? charIf1 : charIf0;
 }
 function addAxestoStateChange(i, stickChar, number) {
-	if (gamepadStates[i] !== prevGamepadStates[i]) return stickChar + number.toString();
+	if (gamepadStates[i] !== prevGamepadStates[i]) {
+		if (number < 10) //number is one digit
+		{
+			return stickChar + "0" + number.toString(); //add a 0 at the beginning of single digits so that way all numbers send have two digits. (Eg. "4" becomes "04")
+		} else {
+			return stickChar + number.toString();
+		}
+	}
 }
 
 // listener to be called when a gamepad is disconnected
@@ -393,3 +432,4 @@ window.addEventListener("gamepaddisconnected", function(e) {
   console.info("Gamepad disconnected");
   delete gamepads[e.gamepad.index];
 });
+ */

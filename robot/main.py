@@ -1,5 +1,7 @@
 # import motors
+import base64
 import math
+from io import BytesIO
 
 from tether import Tether
 from time import sleep
@@ -11,6 +13,8 @@ from vision import Detector, Locator
 from xbox_drive import XboxController
 from termcolor import colored, cprint
 from ControllerReceiver import ControllerReceiver
+
+from PIL import Image
 
 
 x = 0
@@ -56,6 +60,20 @@ async def sendCords():
         await t.send(f'R:{x},{y},{angle}')
         await asyncio.sleep(1.0)
 
+async def sendImages():
+    while True:
+        im = Image.open('rick-astley-rickrolling.jpg')
+        im = im.resize((128, 128), )
+
+        im_file = BytesIO()
+        im.save(im_file, format="JPEG")
+        im_bytes = im_file.getvalue()  # i
+        im_b64 = base64.b64encode(im_bytes)
+
+        print(im_b64)
+        # await t.send("I:" + str(im_b64)[2:-2])
+        await t.send(im_b64)
+        await asyncio.sleep(1.0)
 async def lidar_test():
     i = 0
     while True:
@@ -91,6 +109,7 @@ async def manual_control():
 
 
 loop.create_task(sendCords())
+loop.create_task(sendImages())
 #loop.create_task(lidar_test())
 #loop.create_task(manual_control())
 
