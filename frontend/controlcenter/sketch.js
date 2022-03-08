@@ -8,7 +8,7 @@ const robotHeight = 39;
 
 let ws, xws;
 let driveSettings, generalSettings, consoleSettings, imageSettings;
-let state = 2; // 0 = TD, 1 = AD, 2 = AI
+let state = 0; // 0 = TD, 1 = AD, 2 = AI
 const states = ["Tank Drive", "Arcade Drive", "Autonomous"];
 const shortStates = ["TD", "AD", "AI"];
 
@@ -22,7 +22,7 @@ let robot = {x: arenaWidth / 2, y: 1.5 * robotHeight, a: 0}; // a is angle
 // UI components
 let panels = [];
 
-let gamepadRefreshrate;
+let gamepadRefreshrate = 1500;
 
 // document.addEventListener('keydown', function(event) {
 //     if(event.code === 87) {
@@ -54,14 +54,21 @@ let gamepadRefreshrate;
 // 	}
 // });
 
-function setup() {
+async function setup() {
 	// ws = {send: console.log};
 
 	const ip = prompt("What IP is robot on?", "192.168.2.49");
 	const port = prompt("What port number is the robot using?", "8080")
+
+	//add loading animation
+
+
 	console.log(`Connecting to ws://${ip}:${port}`)
 	ws = new WebSocket(`ws://${ip}:${port}`);
 	ws.onmessage = gotMessage;
+
+
+
 
 	ws.onclose = msg => {
 		alert("Websocket connection closed. Please refresh the webpage to reconnect.");
@@ -79,14 +86,14 @@ function setup() {
 	// 	alert("lost connection with the xbox sever... referesh to reconnect");
 	// };
 
-	imageSettings = QuickSettings.create(100 , 0, "")
+	imageSettings = QuickSettings.create(100, 0, "")
 		.addImage("Robot Image", "")
 		.setWidth(720)
 		.setHeight(480)
 
 	driveSettings = QuickSettings.create(document.body.clientWidth - 300, 0.4 * document.body.clientHeight, "Drive settings")
 		.addButton("Tank Drive", () => handlePress("TD"))
-		.addButton("Arcade Drive",() => handlePress("AD"))
+		.addButton("Arcade Drive", () => handlePress("AD"))
 		.addButton("Autonomous", () => handlePress("AI"))
 		.addButton("STOP", () => handlePress("STOP"))
 		.addButton("CLEAROBS", clearObstacles)
@@ -119,7 +126,7 @@ function setup() {
 		.setHeight(150)
 		.disableControl("Output");
 
-	panels = [ generalSettings, driveSettings, consoleSettings, imageSettings];
+	panels = [generalSettings, driveSettings, consoleSettings, imageSettings];
 	createCanvas(arenaWidth * gridCellResolution / gridSize, arenaHeight * gridCellResolution / gridSize);
 	frameRate(10);
 	angleMode(DEGREES);
@@ -136,7 +143,7 @@ function xboxServerRecv(msg) {
 		return;
 
 
-	if (msg[0] == "a") {
+	if (msg[0] === "a") {
 
 	}
 }
@@ -174,7 +181,8 @@ async function emptyQueue() {
 // Async loop to send Arcade/Tank Drive commands
 async function sendState() {
 	if (state >= 0 && state < 2) {
-		await sendXBOX(states[state].split(" ").map(n => n[0]).join(""));
+		//await sendXBOX(states[state].split(" ").map(n => n[0]).join(""));
+		await gamepadSendingThing();
 	}
 
 	emptyQueue()
@@ -294,7 +302,7 @@ function gotMessage(msg) {
 			// image.style.top = '0px'
 
 			imageSettings.setValue("Robot Image", "data:image/png;base64," + result);
-			console.log(image)
+			//console.log(image)
 		}).catch(err=>console.log(err))
 
 		return;
@@ -348,25 +356,25 @@ window.onresize = function (event) {
 		panel.setPosition(document.body.clientWidth - curWidth - 50, curY);
 	}
 };
-/*
-window.onkeydown = function (gfg) {
-	if (gfg.key.length === 1) {
-		send(gfg.key.toUpperCase());
-	}
-};
-window.onkeyup = function (gfg) {
-	if (gfg.key.length === 1) {
-		send(gfg.key.toLowerCase());
-	}
-}
+
+// window.onkeydown = function (gfg) {
+// 	if (gfg.key.length === 1) {
+// 		send(gfg.key.toUpperCase());
+// 	}
+// };
+// window.onkeyup = function (gfg) {
+// 	if (gfg.key.length === 1) {
+// 		send(gfg.key.toLowerCase());
+// 	}
+// }
 
 var gamepad;
 
 // function to be called when a gamepad is connected
 window.addEventListener("gamepadconnected", function(e) {
   console.info("Gamepad connected!");
-  gamepads[e.gamepad.index] = true;
-  const indexes = Object.keys(gamepads);
+  //gamepads[e.gamepad.index] = true;
+  //const indexes = Object.keys(gamepads);
 });
 
 //Everything below handles the gamepad
@@ -377,54 +385,56 @@ let statesThing = [['A','a'],['B','b'],['X','x'],['Y','y']];
 let axesThing = ['L','l','R','r']
 
 //runs constantly
-let gamepadEvents = setInterval(function ()
+let connectedGamepads = navigator.getGamepads(); //get gamepads
+async function gamepadSendingThing()
 {
-	const connectedGamepads = navigator.getGamepads(); //get gamepads
+	connectedGamepads = navigator.getGamepads();
 //only one gamepad should be connected at all times, so connectedGamepads[0] will always get the gamepad
 	//add the state of all the buttons of gamepadStates.  1 means pressed, 0 means released
+	if (connectedGamepads[0] == null) {
+		return;
+	}
+
 	for (let i = 0; i < connectedGamepads[0].buttons.length; i++) {
-		gamepadStates[i] = connectedGamepads[0].buttons[i].value //
+		gamepadStates[i] = connectedGamepads[0].buttons[i].value; //
 	}
 	//add the axes values of all 4 sticks to GamepadStates and make sure the value convert the decimal value from 0-1 to 0-99
 	for (let i = 0; i < connectedGamepads[0].axes.length; i++) {
 		gamepadStates[i+connectedGamepads[0].buttons.length] = Math.min(Math.trunc(connectedGamepads[0].axes[i]*100),99);
 	}
 
-	//get the time
-	const time = new Date().getTime() - startTime;
-	//if time is greater than the gamepadRefreshrate setting (set in webserver)
-	if (time > gamepadRefreshrate) {
-		let stateChanges = '';
-		//convert gamepadStates into string
-		for (let i = 0; i < statesThing[0].length; i++) {
-			stateChanges += addToStateChanges(i,stateChanges[i][0],stateChanges[i][1])
-		}
-		for (let i = connectedGamepads[0].buttons.length; i < gamepadStates.length; i++) {
-			stateChanges += addAxestoStateChange(i, axesThing[i], gamepadStates[i])
-		}
-		send('G:' + stateChanges)
-		prevGamepadStates = gamepadStates
-		//reset timer
-		startTime = new Date().getTime();
-	}
+	console.log("GamepadStates: " + gamepadStates);
+	console.log("prevGamepadStates: " + prevGamepadStates);
 
-	console.log(gamepadStates)
+	let stateChanges = '';
+	for (let i = 0; i < statesThing.length; i++) {
+		stateChanges += addToStateChanges(i, statesThing[i][0], statesThing[i][1]);
+	}
+	for (let i = connectedGamepads[0].buttons.length; i < gamepadStates.length; i++) {
+		stateChanges += addAxestoStateChange(i, axesThing[i - connectedGamepads[0].buttons.length], gamepadStates[i]);
+	}
+	console.log("State Changes: " + stateChanges);
+	prevGamepadStates = [...gamepadStates];
+	if (stateChanges !== '') {return send('G',stateChanges);}
+
+	//console.log(gamepadStates)
 
 	//console.log(gamepadRefreshrate)
-});
+};
 
 function addToStateChanges(i, charIf1, charIf0) {
-	if (gamepadStates[i] !== prevGamepadStates[i]) return (gamepadStates[0] === 1) ? charIf1 : charIf0;
+	if (gamepadStates[i] !== prevGamepadStates[i]) return (gamepadStates[i] === 1) ? charIf1 : charIf0;
+	else return '';
 }
 function addAxestoStateChange(i, stickChar, number) {
+	if (number >= 100) number = 99; //ensure number is two digits
+	else if (number <= -100) number = -99;
 	if (gamepadStates[i] !== prevGamepadStates[i]) {
-		if (number < 10) //number is one digit
-		{
-			return stickChar + "0" + number.toString(); //add a 0 at the beginning of single digits so that way all numbers send have two digits. (Eg. "4" becomes "04")
-		} else {
-			return stickChar + number.toString();
-		}
+		if (number < 10 && number >= 0) return stickChar + '0' + number.toString(); //Ex. 5 returns as 05
+		else if (number > -10 && number < 0) return stickChar + '-0' + number.toString()[1]; //Ex. -9 returs as -09
+		else return stickChar + number.toString(); //Ex. 93 returns as 93
 	}
+	else return '';
 }
 
 // listener to be called when a gamepad is disconnected
@@ -432,4 +442,3 @@ window.addEventListener("gamepaddisconnected", function(e) {
   console.info("Gamepad disconnected");
   delete gamepads[e.gamepad.index];
 });
- */
