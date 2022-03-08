@@ -14,7 +14,6 @@ f_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=128, timeout=1000)
 b_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=129, timeout=1000)
 TD_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=130, timeout=1000)
 
-
 # Motor Numbers
 class Motor(Enum):
     FRONT_LEFT = 0

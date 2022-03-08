@@ -40,9 +40,10 @@
   "bugs": {
     "url": "https://github.com/Jabbath/node-xboxdrv/issues"
   },
-  "dependencies": {},
+  "dependencies": {
+    "node-xboxdrv": "^0.2.2"
+  },
   "description": "A node module to create bindings for xboxdrv to provide controller input on linux",
-  "devDependencies": {},
   "directories": {},
   "dist": {
     "shasum": "5b9c8eb2b9de18d63aa89d3be5b8ed69d08e3db8",
@@ -66,7 +67,6 @@
     }
   ],
   "name": "node-xboxdrv",
-  "optionalDependencies": {},
   "readme": "ERROR: No README data found!",
   "repository": {
     "type": "git",
