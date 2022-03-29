@@ -110,7 +110,7 @@ async def manual_control():
 # loop.create_task(sendCords())
 loop.create_task(sendImages())
 # loop.create_task(lidar_test())
-loop.create_task(manual_control())
+# loop.create_task(manual_control())
 
 # Start the event loop
 cprint(f"IP Address: {t.get_ip_address()}", "cyan")
