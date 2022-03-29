@@ -87,6 +87,9 @@ async function setup() {
 	// };
 
 	imageSettings = QuickSettings.create(100, 0, "")
+		// .addRange("Image Refresh Rate", 100, 5000, 1000, 100, function (Value) {
+		// 	send("I:" + value)
+		// })
 		.addImage("Robot Image", "")
 		.setWidth(720)
 		.setHeight(480)

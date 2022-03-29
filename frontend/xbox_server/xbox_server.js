@@ -1,4 +1,4 @@
-const ws = require("nodejs-websocket");
+const xbowWS = require("nodejs-websocket");
 const EventEmitter = require("events");
 
 
@@ -31,8 +31,8 @@ controller.on('b', data => datalog.emit('data', `b:${data}`));
 controller.on('x', data => datalog.emit('data', `x:${data}`));
 controller.on('y', data => datalog.emit('data', `y:${data}`));
 
-const ws_server = ws.createServer(conn => {
-	console.log("new ws connection");
+const xbowWS_server = xbowWS.createServer(conn => {
+	console.log("new xbowWS connection");
 	datalog.on('data', data => conn.sendText(data));
 }).listen(8001);
 
