@@ -86,13 +86,17 @@ async function setup() {
 	// 	alert("lost connection with the xbox sever... referesh to reconnect");
 	// };
 
-	imageSettings = QuickSettings.create(100, 0, "")
-		// .addRange("Image Refresh Rate", 100, 5000, 1000, 100, function (Value) {
-		// 	send("I:" + value)
-		// })
+	imageSettings = QuickSettings.create(document.body.clientWidth-850, 0, "Robot Camera")
+		.addRange("Camera Refresh Rate (seconds)", .2, 5, 1, .2, function (value) {
+			send("I:" + value.toString())
+		})
+		.addRange("Resolution I suppose", 20,480, 140, 60, function (value) {
+			send("R:" + value.toString())
+		})
 		.addImage("Robot Image", "")
-		.setWidth(720)
-		.setHeight(480)
+		.addImage("Back Image", "")
+		.setWidth(720/2)
+		.setHeight(700)
 
 	driveSettings = QuickSettings.create(document.body.clientWidth - 300, 0.4 * document.body.clientHeight, "Drive settings")
 		.addButton("Tank Drive", () => handlePress("TD"))
@@ -129,7 +133,7 @@ async function setup() {
 		.setHeight(150)
 		.disableControl("Output");
 
-	panels = [generalSettings, driveSettings, consoleSettings, imageSettings];
+	panels = [generalSettings, driveSettings, consoleSettings];
 	createCanvas(arenaWidth * gridCellResolution / gridSize, arenaHeight * gridCellResolution / gridSize);
 	frameRate(10);
 	angleMode(DEGREES);
@@ -303,8 +307,14 @@ function gotMessage(msg) {
 			// image.style.height = '480px';
 			// image.style.left = '300px'
 			// image.style.top = '0px'
-
-			imageSettings.setValue("Robot Image", "data:image/png;base64," + result);
+			let cameraLocation = result.slice(-1)
+			let image = result.slice(0,-1)
+			if (cameraLocation === "A") {
+				imageSettings.setValue("Robot Image", "data:image/png;base64," + image);
+			}
+			else if (cameraLocation === "B") {
+				imageSettings.setValue("Back Image", "data:image/png;base64," + image);
+			}
 			//console.log(image)
 		}).catch(err=>console.log(err))
 

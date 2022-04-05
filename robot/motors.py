@@ -1,18 +1,20 @@
 # Contains methods for the control and monitoring of various motors
-#from board import SCL, SDA
-#from adafruit_pca9685 import PCA9685
+# from board import SCL, SDA
+# from adafruit_pca9685 import PCA9685
 from pysabertooth import Sabertooth
 # from analogio import AnalogIn
 from enum import Enum
 import board
 import busio
 import time
+
 # import rotaryio
 
 # each Sabertooth controls 2 motors
 f_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=128, timeout=1000)
 b_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=129, timeout=1000)
 TD_saber = Sabertooth('/dev/ttyS1', baudrate=9600, address=130, timeout=1000)
+
 
 # Motor Numbers
 class Motor(Enum):
@@ -82,7 +84,6 @@ class DriveTrain:
         DriveTrain.set_motor_speed(2, right_percent)
         DriveTrain.set_motor_speed(3, right_percent)
 
-
 # class Trenchdigger:
 #     TD_speed = 0
 
@@ -109,10 +110,10 @@ class DriveTrain:
 #         TD_saber.drive(0, 0)
 #         TD_speed = 0
 
-    # @staticmethod
-    # def get_encoder():
-    #     position = enc.position
-    #     last_position = position
-    #     print(position)
-    #     return position
-    #     time.sleep(0.25)
+# @staticmethod
+# def get_encoder():
+#     position = enc.position
+#     last_position = position
+#     print(position)
+#     return position
+#     time.sleep(0.25)
