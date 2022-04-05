@@ -90,13 +90,12 @@ async function setup() {
 		.addRange("Camera Refresh Rate (seconds)", .2, 5, 1, .2, function (value) {
 			send("I:" + value.toString())
 		})
-		.addRange("Resolution I suppose", 20,480, 140, 60, function (value) {
+		.addRange("Resolution I suppose", 80,480, 140, 60, function (value) {
 			send("R:" + value.toString())
 		})
 		.addImage("Robot Image", "")
-		.addImage("Back Image", "")
-		.setWidth(720/2)
-		.setHeight(700)
+		.setWidth(640)
+		.setHeight(580)
 
 	driveSettings = QuickSettings.create(document.body.clientWidth - 300, 0.4 * document.body.clientHeight, "Drive settings")
 		.addButton("Tank Drive", () => handlePress("TD"))
@@ -312,9 +311,9 @@ function gotMessage(msg) {
 			if (cameraLocation === "A") {
 				imageSettings.setValue("Robot Image", "data:image/png;base64," + image);
 			}
-			else if (cameraLocation === "B") {
-				imageSettings.setValue("Back Image", "data:image/png;base64," + image);
-			}
+			// else if (cameraLocation === "B") {
+			// 	imageSettings.setValue("Back Image", "data:image/png;base64," + image);
+			// }
 			//console.log(image)
 		}).catch(err=>console.log(err))
 
